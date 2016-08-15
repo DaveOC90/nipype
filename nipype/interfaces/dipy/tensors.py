@@ -54,7 +54,7 @@ class DKI(DipyDiffusionInterface):
             mask = nb.load(self.inputs.mask_file).get_data()
 
         # Fit the DKI model
-        kurtosis_model = dki.KurtosisModel(gtab)
+        kurtosis_model = dki.DiffusionKurtosisModel(gtab)
         kurtosis_fit = kurtosis_model.fit(data, mask)
         lower_triangular = kurtosis_fit.lower_triangular()
         img = nifti1_symmat(lower_triangular, affine)
