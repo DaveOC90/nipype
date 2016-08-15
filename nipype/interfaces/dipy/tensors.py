@@ -49,7 +49,7 @@ class DKI(DipyDiffusionInterface):
         img = nb.load(self.inputs.in_file)
         data = img.get_data()
         affine = img.affine
-        mask = Noneo
+        mask = None
         if isdefined(self.inputs.mask_file):
             mask = nb.load(self.inputs.mask_file).get_data()
 
