@@ -34,6 +34,7 @@ class DKI(DipyDiffusionInterface):
 
     Example
     -------
+    >>> import nipype.interfaces.dipy as dipy
     >>> dki = dipy.DKI()
     >>> dki.inputs.in_file = 'diffusion.nii'
     >>> dki.inputs.in_bvec = 'bvecs'
