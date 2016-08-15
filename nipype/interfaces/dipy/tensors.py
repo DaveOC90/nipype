@@ -14,6 +14,74 @@ from ... import logging
 IFLOGGER = logging.getLogger('interface')
 
 
+class DKIInputSpec(DipyBaseInterfaceInputSpec):
+    mask_file = File(exists=True, desc='An optional white matter mask')
+    
+class DKIOutputSpec(TraitedSpec):
+    out_file = File(exists=True)
+    fa_file = File(exists=True)
+    md_file = File(exists=True)
+    rd_file = File(exists=True)
+    ad_file = File(exists=True)
+
+    mk_file = File(exists=True)
+    ak_file = File(exists=True)
+    rk_file = File(exists=True)
+
+class DKI(DipyDiffusionInterface):
+    """
+    Calculates the diffusion kurtosis model parameters
+
+    Example
+    -------
+    >>> dki = dipy.DKI()
+    >>> dki.inputs.in_file = 'diffusion.nii'
+    >>> dki.inputs.in_bvec = 'bvecs'
+    >>> dki.inputs.in_bval = 'bvals'
+    >>> dki.run()
+    """
+
+    def _run_interface(self, runtime):
+        from dipy.reconst import dki
+        from dipy.io.utils import nifti1_symmat
+        gtab = self._get_gradient_table()
+
+        img = nb.load(self.inputs.in_file)
+        data = img.get_data()
+        affine = img.affine
+        mask = Noneo
+        if isdefined(self.inputs.mask_file):
+            mask = nb.load(self.inputs.mask_file).get_data()
+
+        # Fit the DKI model
+        kurtosis_model = dki.KurtosisModel(gtab)
+        kurtosis_fit = kurtosis_model.fit(data, mask)
+        lower_triangular = kurtosis_fit.lower_triangular()
+        img = nifti1_symmat(lower_triangular, affine)
+        out_file = self._gen_filename('dki')
+        nb.save(img, out_file)
+        IFLOGGER.info('DKI parameters image saved as {i}.format(i=out_file)')
+
+        # FA, MD, RD, and AD
+        for metric in ['fa', 'md', 'rd', 'ad', 'mk', 'ak', 'rk']:
+            data = getattr(kurtosis_fit.metric).astype('float32')
+            out_name = self._gen_filename(metric)
+            nb.Nifti1Image(data, affine).to_filename(out_name)
+            IFLOGGER.info('dki {metric} image saved as {i}'.format(i=out_name,
+                                                                   metric=metric))
+
+        return runtime
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['out_file'] = self._gen_filename('dki')
+
+        for metric in ['fa', 'md', 'rd', 'ad', 'mk', 'ak', 'rk']:
+            outputs['{}'.format(metric)] = self._gen_filename(metric)
+
+        return outputs
+
+
 class DTIInputSpec(DipyBaseInterfaceInputSpec):
     mask_file = File(exists=True,
                      desc='An optional white matter mask')
