@@ -39,7 +39,7 @@ class DKI(DipyDiffusionInterface):
     >>> dki.inputs.in_file = 'diffusion.nii'
     >>> dki.inputs.in_bvec = 'bvecs'
     >>> dki.inputs.in_bval = 'bvals'
-    >>> dki.run()
+    >>> dki.run()  # doctest: SKIP+
     """
 
     def _run_interface(self, runtime):
@@ -68,7 +68,7 @@ class DKI(DipyDiffusionInterface):
             data = getattr(kurtosis_fit.metric).astype('float32')
             out_name = self._gen_filename(metric)
             nb.Nifti1Image(data, affine).to_filename(out_name)
-            IFLOGGER.info('dki {metric} image saved as {i}'.format(i=out_name,
+            IFLOGGER.info('DKI {metric} image saved as {i}'.format(i=out_name,
                                                                    metric=metric))
 
         return runtime
@@ -108,7 +108,7 @@ class DTI(DipyDiffusionInterface):
     >>> dti.inputs.in_file = 'diffusion.nii'
     >>> dti.inputs.in_bvec = 'bvecs'
     >>> dti.inputs.in_bval = 'bvals'
-    >>> dti.run()                                   # doctest: +SKIP
+    >>> dti.run()  # doctest: +SKIP
     """
     input_spec = DTIInputSpec
     output_spec = DTIOutputSpec
