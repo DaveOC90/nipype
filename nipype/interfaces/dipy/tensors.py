@@ -19,14 +19,13 @@ class DKIInputSpec(DipyBaseInterfaceInputSpec):
     
 class DKIOutputSpec(TraitedSpec):
     out_file = File(exists=True)
-    fa_file = File(exists=True)
-    md_file = File(exists=True)
-    rd_file = File(exists=True)
-    ad_file = File(exists=True)
-
-    mk_file = File(exists=True)
-    ak_file = File(exists=True)
-    rk_file = File(exists=True)
+    fa = File(exists=True)
+    md = File(exists=True)
+    rd = File(exists=True)
+    ad = File(exists=True)
+    mk = File(exists=True)
+    ak = File(exists=True)
+    rk = File(exists=True)
 
 class DKI(DipyDiffusionInterface):
     """
@@ -41,6 +40,9 @@ class DKI(DipyDiffusionInterface):
     >>> dki.inputs.in_bval = 'bvals'
     >>> dki.run()  # doctest: SKIP+
     """
+
+    input_spec = DKIInputSpec
+    output_spec = DKIOutputSpec
 
     def _run_interface(self, runtime):
         from dipy.reconst import dki
@@ -64,12 +66,21 @@ class DKI(DipyDiffusionInterface):
         IFLOGGER.info('DKI parameters image saved as {i}.format(i=out_file)')
 
         # FA, MD, RD, and AD
-        for metric in ['fa', 'md', 'rd', 'ad', 'mk', 'ak', 'rk']:
-            data = getattr(kurtosis_fit.metric).astype('float32')
+        for metric in ['fa', 'md', 'rd', 'ad']:
+            data = getattr(kurtosis_fit,metric).astype('float32')
             out_name = self._gen_filename(metric)
             nb.Nifti1Image(data, affine).to_filename(out_name)
             IFLOGGER.info('DKI {metric} image saved as {i}'.format(i=out_name,
                                                                    metric=metric))
+
+        # Quick fix, assuming min_kurtosis=0 and max_kurtosis=3
+        for metric in ['mk', 'ak', 'rk']:
+            data = getattr(kurtosis_fit,metric)(0,3).astype('float32')
+            out_name = self._gen_filename(metric)
+            nb.Nifti1Image(data, affine).to_filename(out_name)
+            IFLOGGER.info('DKI {metric} image saved as {i}'.format(i=out_name,
+                                                                   metric=metric))
+
 
         return runtime
 
